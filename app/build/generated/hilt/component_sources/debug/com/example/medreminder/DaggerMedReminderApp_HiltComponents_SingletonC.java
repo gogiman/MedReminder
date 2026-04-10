@@ -1,0 +1,772 @@
+package com.example.medreminder;
+
+import android.app.Activity;
+import android.app.Service;
+import android.content.Context;
+import android.view.View;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.SavedStateHandle;
+import androidx.lifecycle.ViewModel;
+import com.example.medreminder.data.database.AppDatabase;
+import com.example.medreminder.data.database.dao.MedicationDao;
+import com.example.medreminder.data.database.dao.MedicationLogDao;
+import com.example.medreminder.data.preferences.SettingsRepository;
+import com.example.medreminder.data.repository.MedicationRepository;
+import com.example.medreminder.di.AppModule_ProvideApplicationContextFactory;
+import com.example.medreminder.di.DatabaseModule_ProvideDatabaseFactory;
+import com.example.medreminder.di.DatabaseModule_ProvideMedicationDaoFactory;
+import com.example.medreminder.di.DatabaseModule_ProvideMedicationLogDaoFactory;
+import com.example.medreminder.notification.AlarmReceiver;
+import com.example.medreminder.notification.AlarmReceiver_MembersInjector;
+import com.example.medreminder.notification.AlarmScheduler;
+import com.example.medreminder.notification.BootReceiver;
+import com.example.medreminder.notification.BootReceiver_MembersInjector;
+import com.example.medreminder.notification.NotificationActionReceiver;
+import com.example.medreminder.notification.NotificationActionReceiver_MembersInjector;
+import com.example.medreminder.ui.addmedication.AddMedicationViewModel;
+import com.example.medreminder.ui.addmedication.AddMedicationViewModel_HiltModules;
+import com.example.medreminder.ui.history.HistoryViewModel;
+import com.example.medreminder.ui.history.HistoryViewModel_HiltModules;
+import com.example.medreminder.ui.home.HomeViewModel;
+import com.example.medreminder.ui.home.HomeViewModel_HiltModules;
+import com.example.medreminder.ui.medications.MedicationsViewModel;
+import com.example.medreminder.ui.medications.MedicationsViewModel_HiltModules;
+import com.example.medreminder.ui.settings.RingtoneManagerWrapper;
+import com.example.medreminder.ui.settings.SettingsViewModel;
+import com.example.medreminder.ui.settings.SettingsViewModel_HiltModules;
+import dagger.hilt.android.ActivityRetainedLifecycle;
+import dagger.hilt.android.ViewModelLifecycle;
+import dagger.hilt.android.internal.builders.ActivityComponentBuilder;
+import dagger.hilt.android.internal.builders.ActivityRetainedComponentBuilder;
+import dagger.hilt.android.internal.builders.FragmentComponentBuilder;
+import dagger.hilt.android.internal.builders.ServiceComponentBuilder;
+import dagger.hilt.android.internal.builders.ViewComponentBuilder;
+import dagger.hilt.android.internal.builders.ViewModelComponentBuilder;
+import dagger.hilt.android.internal.builders.ViewWithFragmentComponentBuilder;
+import dagger.hilt.android.internal.lifecycle.DefaultViewModelFactories;
+import dagger.hilt.android.internal.lifecycle.DefaultViewModelFactories_InternalFactoryFactory_Factory;
+import dagger.hilt.android.internal.managers.ActivityRetainedComponentManager_LifecycleModule_ProvideActivityRetainedLifecycleFactory;
+import dagger.hilt.android.internal.managers.SavedStateHandleHolder;
+import dagger.hilt.android.internal.modules.ApplicationContextModule;
+import dagger.hilt.android.internal.modules.ApplicationContextModule_ProvideContextFactory;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.DoubleCheck;
+import dagger.internal.IdentifierNameString;
+import dagger.internal.KeepFieldType;
+import dagger.internal.LazyClassKeyMap;
+import dagger.internal.MapBuilder;
+import dagger.internal.Preconditions;
+import dagger.internal.Provider;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast"
+})
+public final class DaggerMedReminderApp_HiltComponents_SingletonC {
+  private DaggerMedReminderApp_HiltComponents_SingletonC() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static final class Builder {
+    private ApplicationContextModule applicationContextModule;
+
+    private Builder() {
+    }
+
+    public Builder applicationContextModule(ApplicationContextModule applicationContextModule) {
+      this.applicationContextModule = Preconditions.checkNotNull(applicationContextModule);
+      return this;
+    }
+
+    public MedReminderApp_HiltComponents.SingletonC build() {
+      Preconditions.checkBuilderRequirement(applicationContextModule, ApplicationContextModule.class);
+      return new SingletonCImpl(applicationContextModule);
+    }
+  }
+
+  private static final class ActivityRetainedCBuilder implements MedReminderApp_HiltComponents.ActivityRetainedC.Builder {
+    private final SingletonCImpl singletonCImpl;
+
+    private SavedStateHandleHolder savedStateHandleHolder;
+
+    private ActivityRetainedCBuilder(SingletonCImpl singletonCImpl) {
+      this.singletonCImpl = singletonCImpl;
+    }
+
+    @Override
+    public ActivityRetainedCBuilder savedStateHandleHolder(
+        SavedStateHandleHolder savedStateHandleHolder) {
+      this.savedStateHandleHolder = Preconditions.checkNotNull(savedStateHandleHolder);
+      return this;
+    }
+
+    @Override
+    public MedReminderApp_HiltComponents.ActivityRetainedC build() {
+      Preconditions.checkBuilderRequirement(savedStateHandleHolder, SavedStateHandleHolder.class);
+      return new ActivityRetainedCImpl(singletonCImpl, savedStateHandleHolder);
+    }
+  }
+
+  private static final class ActivityCBuilder implements MedReminderApp_HiltComponents.ActivityC.Builder {
+    private final SingletonCImpl singletonCImpl;
+
+    private final ActivityRetainedCImpl activityRetainedCImpl;
+
+    private Activity activity;
+
+    private ActivityCBuilder(SingletonCImpl singletonCImpl,
+        ActivityRetainedCImpl activityRetainedCImpl) {
+      this.singletonCImpl = singletonCImpl;
+      this.activityRetainedCImpl = activityRetainedCImpl;
+    }
+
+    @Override
+    public ActivityCBuilder activity(Activity activity) {
+      this.activity = Preconditions.checkNotNull(activity);
+      return this;
+    }
+
+    @Override
+    public MedReminderApp_HiltComponents.ActivityC build() {
+      Preconditions.checkBuilderRequirement(activity, Activity.class);
+      return new ActivityCImpl(singletonCImpl, activityRetainedCImpl, activity);
+    }
+  }
+
+  private static final class FragmentCBuilder implements MedReminderApp_HiltComponents.FragmentC.Builder {
+    private final SingletonCImpl singletonCImpl;
+
+    private final ActivityRetainedCImpl activityRetainedCImpl;
+
+    private final ActivityCImpl activityCImpl;
+
+    private Fragment fragment;
+
+    private FragmentCBuilder(SingletonCImpl singletonCImpl,
+        ActivityRetainedCImpl activityRetainedCImpl, ActivityCImpl activityCImpl) {
+      this.singletonCImpl = singletonCImpl;
+      this.activityRetainedCImpl = activityRetainedCImpl;
+      this.activityCImpl = activityCImpl;
+    }
+
+    @Override
+    public FragmentCBuilder fragment(Fragment fragment) {
+      this.fragment = Preconditions.checkNotNull(fragment);
+      return this;
+    }
+
+    @Override
+    public MedReminderApp_HiltComponents.FragmentC build() {
+      Preconditions.checkBuilderRequirement(fragment, Fragment.class);
+      return new FragmentCImpl(singletonCImpl, activityRetainedCImpl, activityCImpl, fragment);
+    }
+  }
+
+  private static final class ViewWithFragmentCBuilder implements MedReminderApp_HiltComponents.ViewWithFragmentC.Builder {
+    private final SingletonCImpl singletonCImpl;
+
+    private final ActivityRetainedCImpl activityRetainedCImpl;
+
+    private final ActivityCImpl activityCImpl;
+
+    private final FragmentCImpl fragmentCImpl;
+
+    private View view;
+
+    private ViewWithFragmentCBuilder(SingletonCImpl singletonCImpl,
+        ActivityRetainedCImpl activityRetainedCImpl, ActivityCImpl activityCImpl,
+        FragmentCImpl fragmentCImpl) {
+      this.singletonCImpl = singletonCImpl;
+      this.activityRetainedCImpl = activityRetainedCImpl;
+      this.activityCImpl = activityCImpl;
+      this.fragmentCImpl = fragmentCImpl;
+    }
+
+    @Override
+    public ViewWithFragmentCBuilder view(View view) {
+      this.view = Preconditions.checkNotNull(view);
+      return this;
+    }
+
+    @Override
+    public MedReminderApp_HiltComponents.ViewWithFragmentC build() {
+      Preconditions.checkBuilderRequirement(view, View.class);
+      return new ViewWithFragmentCImpl(singletonCImpl, activityRetainedCImpl, activityCImpl, fragmentCImpl, view);
+    }
+  }
+
+  private static final class ViewCBuilder implements MedReminderApp_HiltComponents.ViewC.Builder {
+    private final SingletonCImpl singletonCImpl;
+
+    private final ActivityRetainedCImpl activityRetainedCImpl;
+
+    private final ActivityCImpl activityCImpl;
+
+    private View view;
+
+    private ViewCBuilder(SingletonCImpl singletonCImpl, ActivityRetainedCImpl activityRetainedCImpl,
+        ActivityCImpl activityCImpl) {
+      this.singletonCImpl = singletonCImpl;
+      this.activityRetainedCImpl = activityRetainedCImpl;
+      this.activityCImpl = activityCImpl;
+    }
+
+    @Override
+    public ViewCBuilder view(View view) {
+      this.view = Preconditions.checkNotNull(view);
+      return this;
+    }
+
+    @Override
+    public MedReminderApp_HiltComponents.ViewC build() {
+      Preconditions.checkBuilderRequirement(view, View.class);
+      return new ViewCImpl(singletonCImpl, activityRetainedCImpl, activityCImpl, view);
+    }
+  }
+
+  private static final class ViewModelCBuilder implements MedReminderApp_HiltComponents.ViewModelC.Builder {
+    private final SingletonCImpl singletonCImpl;
+
+    private final ActivityRetainedCImpl activityRetainedCImpl;
+
+    private SavedStateHandle savedStateHandle;
+
+    private ViewModelLifecycle viewModelLifecycle;
+
+    private ViewModelCBuilder(SingletonCImpl singletonCImpl,
+        ActivityRetainedCImpl activityRetainedCImpl) {
+      this.singletonCImpl = singletonCImpl;
+      this.activityRetainedCImpl = activityRetainedCImpl;
+    }
+
+    @Override
+    public ViewModelCBuilder savedStateHandle(SavedStateHandle handle) {
+      this.savedStateHandle = Preconditions.checkNotNull(handle);
+      return this;
+    }
+
+    @Override
+    public ViewModelCBuilder viewModelLifecycle(ViewModelLifecycle viewModelLifecycle) {
+      this.viewModelLifecycle = Preconditions.checkNotNull(viewModelLifecycle);
+      return this;
+    }
+
+    @Override
+    public MedReminderApp_HiltComponents.ViewModelC build() {
+      Preconditions.checkBuilderRequirement(savedStateHandle, SavedStateHandle.class);
+      Preconditions.checkBuilderRequirement(viewModelLifecycle, ViewModelLifecycle.class);
+      return new ViewModelCImpl(singletonCImpl, activityRetainedCImpl, savedStateHandle, viewModelLifecycle);
+    }
+  }
+
+  private static final class ServiceCBuilder implements MedReminderApp_HiltComponents.ServiceC.Builder {
+    private final SingletonCImpl singletonCImpl;
+
+    private Service service;
+
+    private ServiceCBuilder(SingletonCImpl singletonCImpl) {
+      this.singletonCImpl = singletonCImpl;
+    }
+
+    @Override
+    public ServiceCBuilder service(Service service) {
+      this.service = Preconditions.checkNotNull(service);
+      return this;
+    }
+
+    @Override
+    public MedReminderApp_HiltComponents.ServiceC build() {
+      Preconditions.checkBuilderRequirement(service, Service.class);
+      return new ServiceCImpl(singletonCImpl, service);
+    }
+  }
+
+  private static final class ViewWithFragmentCImpl extends MedReminderApp_HiltComponents.ViewWithFragmentC {
+    private final SingletonCImpl singletonCImpl;
+
+    private final ActivityRetainedCImpl activityRetainedCImpl;
+
+    private final ActivityCImpl activityCImpl;
+
+    private final FragmentCImpl fragmentCImpl;
+
+    private final ViewWithFragmentCImpl viewWithFragmentCImpl = this;
+
+    private ViewWithFragmentCImpl(SingletonCImpl singletonCImpl,
+        ActivityRetainedCImpl activityRetainedCImpl, ActivityCImpl activityCImpl,
+        FragmentCImpl fragmentCImpl, View viewParam) {
+      this.singletonCImpl = singletonCImpl;
+      this.activityRetainedCImpl = activityRetainedCImpl;
+      this.activityCImpl = activityCImpl;
+      this.fragmentCImpl = fragmentCImpl;
+
+
+    }
+  }
+
+  private static final class FragmentCImpl extends MedReminderApp_HiltComponents.FragmentC {
+    private final SingletonCImpl singletonCImpl;
+
+    private final ActivityRetainedCImpl activityRetainedCImpl;
+
+    private final ActivityCImpl activityCImpl;
+
+    private final FragmentCImpl fragmentCImpl = this;
+
+    private FragmentCImpl(SingletonCImpl singletonCImpl,
+        ActivityRetainedCImpl activityRetainedCImpl, ActivityCImpl activityCImpl,
+        Fragment fragmentParam) {
+      this.singletonCImpl = singletonCImpl;
+      this.activityRetainedCImpl = activityRetainedCImpl;
+      this.activityCImpl = activityCImpl;
+
+
+    }
+
+    @Override
+    public DefaultViewModelFactories.InternalFactoryFactory getHiltInternalFactoryFactory() {
+      return activityCImpl.getHiltInternalFactoryFactory();
+    }
+
+    @Override
+    public ViewWithFragmentComponentBuilder viewWithFragmentComponentBuilder() {
+      return new ViewWithFragmentCBuilder(singletonCImpl, activityRetainedCImpl, activityCImpl, fragmentCImpl);
+    }
+  }
+
+  private static final class ViewCImpl extends MedReminderApp_HiltComponents.ViewC {
+    private final SingletonCImpl singletonCImpl;
+
+    private final ActivityRetainedCImpl activityRetainedCImpl;
+
+    private final ActivityCImpl activityCImpl;
+
+    private final ViewCImpl viewCImpl = this;
+
+    private ViewCImpl(SingletonCImpl singletonCImpl, ActivityRetainedCImpl activityRetainedCImpl,
+        ActivityCImpl activityCImpl, View viewParam) {
+      this.singletonCImpl = singletonCImpl;
+      this.activityRetainedCImpl = activityRetainedCImpl;
+      this.activityCImpl = activityCImpl;
+
+
+    }
+  }
+
+  private static final class ActivityCImpl extends MedReminderApp_HiltComponents.ActivityC {
+    private final SingletonCImpl singletonCImpl;
+
+    private final ActivityRetainedCImpl activityRetainedCImpl;
+
+    private final ActivityCImpl activityCImpl = this;
+
+    private ActivityCImpl(SingletonCImpl singletonCImpl,
+        ActivityRetainedCImpl activityRetainedCImpl, Activity activityParam) {
+      this.singletonCImpl = singletonCImpl;
+      this.activityRetainedCImpl = activityRetainedCImpl;
+
+
+    }
+
+    @Override
+    public void injectMainActivity(MainActivity mainActivity) {
+    }
+
+    @Override
+    public DefaultViewModelFactories.InternalFactoryFactory getHiltInternalFactoryFactory() {
+      return DefaultViewModelFactories_InternalFactoryFactory_Factory.newInstance(getViewModelKeys(), new ViewModelCBuilder(singletonCImpl, activityRetainedCImpl));
+    }
+
+    @Override
+    public Map<Class<?>, Boolean> getViewModelKeys() {
+      return LazyClassKeyMap.<Boolean>of(MapBuilder.<String, Boolean>newMapBuilder(5).put(LazyClassKeyProvider.com_example_medreminder_ui_addmedication_AddMedicationViewModel, AddMedicationViewModel_HiltModules.KeyModule.provide()).put(LazyClassKeyProvider.com_example_medreminder_ui_history_HistoryViewModel, HistoryViewModel_HiltModules.KeyModule.provide()).put(LazyClassKeyProvider.com_example_medreminder_ui_home_HomeViewModel, HomeViewModel_HiltModules.KeyModule.provide()).put(LazyClassKeyProvider.com_example_medreminder_ui_medications_MedicationsViewModel, MedicationsViewModel_HiltModules.KeyModule.provide()).put(LazyClassKeyProvider.com_example_medreminder_ui_settings_SettingsViewModel, SettingsViewModel_HiltModules.KeyModule.provide()).build());
+    }
+
+    @Override
+    public ViewModelComponentBuilder getViewModelComponentBuilder() {
+      return new ViewModelCBuilder(singletonCImpl, activityRetainedCImpl);
+    }
+
+    @Override
+    public FragmentComponentBuilder fragmentComponentBuilder() {
+      return new FragmentCBuilder(singletonCImpl, activityRetainedCImpl, activityCImpl);
+    }
+
+    @Override
+    public ViewComponentBuilder viewComponentBuilder() {
+      return new ViewCBuilder(singletonCImpl, activityRetainedCImpl, activityCImpl);
+    }
+
+    @IdentifierNameString
+    private static final class LazyClassKeyProvider {
+      static String com_example_medreminder_ui_medications_MedicationsViewModel = "com.example.medreminder.ui.medications.MedicationsViewModel";
+
+      static String com_example_medreminder_ui_addmedication_AddMedicationViewModel = "com.example.medreminder.ui.addmedication.AddMedicationViewModel";
+
+      static String com_example_medreminder_ui_home_HomeViewModel = "com.example.medreminder.ui.home.HomeViewModel";
+
+      static String com_example_medreminder_ui_history_HistoryViewModel = "com.example.medreminder.ui.history.HistoryViewModel";
+
+      static String com_example_medreminder_ui_settings_SettingsViewModel = "com.example.medreminder.ui.settings.SettingsViewModel";
+
+      @KeepFieldType
+      MedicationsViewModel com_example_medreminder_ui_medications_MedicationsViewModel2;
+
+      @KeepFieldType
+      AddMedicationViewModel com_example_medreminder_ui_addmedication_AddMedicationViewModel2;
+
+      @KeepFieldType
+      HomeViewModel com_example_medreminder_ui_home_HomeViewModel2;
+
+      @KeepFieldType
+      HistoryViewModel com_example_medreminder_ui_history_HistoryViewModel2;
+
+      @KeepFieldType
+      SettingsViewModel com_example_medreminder_ui_settings_SettingsViewModel2;
+    }
+  }
+
+  private static final class ViewModelCImpl extends MedReminderApp_HiltComponents.ViewModelC {
+    private final SavedStateHandle savedStateHandle;
+
+    private final SingletonCImpl singletonCImpl;
+
+    private final ActivityRetainedCImpl activityRetainedCImpl;
+
+    private final ViewModelCImpl viewModelCImpl = this;
+
+    private Provider<AddMedicationViewModel> addMedicationViewModelProvider;
+
+    private Provider<HistoryViewModel> historyViewModelProvider;
+
+    private Provider<HomeViewModel> homeViewModelProvider;
+
+    private Provider<MedicationsViewModel> medicationsViewModelProvider;
+
+    private Provider<SettingsViewModel> settingsViewModelProvider;
+
+    private ViewModelCImpl(SingletonCImpl singletonCImpl,
+        ActivityRetainedCImpl activityRetainedCImpl, SavedStateHandle savedStateHandleParam,
+        ViewModelLifecycle viewModelLifecycleParam) {
+      this.singletonCImpl = singletonCImpl;
+      this.activityRetainedCImpl = activityRetainedCImpl;
+      this.savedStateHandle = savedStateHandleParam;
+      initialize(savedStateHandleParam, viewModelLifecycleParam);
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize(final SavedStateHandle savedStateHandleParam,
+        final ViewModelLifecycle viewModelLifecycleParam) {
+      this.addMedicationViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 0);
+      this.historyViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 1);
+      this.homeViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 2);
+      this.medicationsViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 3);
+      this.settingsViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 4);
+    }
+
+    @Override
+    public Map<Class<?>, javax.inject.Provider<ViewModel>> getHiltViewModelMap() {
+      return LazyClassKeyMap.<javax.inject.Provider<ViewModel>>of(MapBuilder.<String, javax.inject.Provider<ViewModel>>newMapBuilder(5).put(LazyClassKeyProvider.com_example_medreminder_ui_addmedication_AddMedicationViewModel, ((Provider) addMedicationViewModelProvider)).put(LazyClassKeyProvider.com_example_medreminder_ui_history_HistoryViewModel, ((Provider) historyViewModelProvider)).put(LazyClassKeyProvider.com_example_medreminder_ui_home_HomeViewModel, ((Provider) homeViewModelProvider)).put(LazyClassKeyProvider.com_example_medreminder_ui_medications_MedicationsViewModel, ((Provider) medicationsViewModelProvider)).put(LazyClassKeyProvider.com_example_medreminder_ui_settings_SettingsViewModel, ((Provider) settingsViewModelProvider)).build());
+    }
+
+    @Override
+    public Map<Class<?>, Object> getHiltViewModelAssistedMap() {
+      return Collections.<Class<?>, Object>emptyMap();
+    }
+
+    @IdentifierNameString
+    private static final class LazyClassKeyProvider {
+      static String com_example_medreminder_ui_home_HomeViewModel = "com.example.medreminder.ui.home.HomeViewModel";
+
+      static String com_example_medreminder_ui_addmedication_AddMedicationViewModel = "com.example.medreminder.ui.addmedication.AddMedicationViewModel";
+
+      static String com_example_medreminder_ui_history_HistoryViewModel = "com.example.medreminder.ui.history.HistoryViewModel";
+
+      static String com_example_medreminder_ui_medications_MedicationsViewModel = "com.example.medreminder.ui.medications.MedicationsViewModel";
+
+      static String com_example_medreminder_ui_settings_SettingsViewModel = "com.example.medreminder.ui.settings.SettingsViewModel";
+
+      @KeepFieldType
+      HomeViewModel com_example_medreminder_ui_home_HomeViewModel2;
+
+      @KeepFieldType
+      AddMedicationViewModel com_example_medreminder_ui_addmedication_AddMedicationViewModel2;
+
+      @KeepFieldType
+      HistoryViewModel com_example_medreminder_ui_history_HistoryViewModel2;
+
+      @KeepFieldType
+      MedicationsViewModel com_example_medreminder_ui_medications_MedicationsViewModel2;
+
+      @KeepFieldType
+      SettingsViewModel com_example_medreminder_ui_settings_SettingsViewModel2;
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final SingletonCImpl singletonCImpl;
+
+      private final ActivityRetainedCImpl activityRetainedCImpl;
+
+      private final ViewModelCImpl viewModelCImpl;
+
+      private final int id;
+
+      SwitchingProvider(SingletonCImpl singletonCImpl, ActivityRetainedCImpl activityRetainedCImpl,
+          ViewModelCImpl viewModelCImpl, int id) {
+        this.singletonCImpl = singletonCImpl;
+        this.activityRetainedCImpl = activityRetainedCImpl;
+        this.viewModelCImpl = viewModelCImpl;
+        this.id = id;
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public T get() {
+        switch (id) {
+          case 0: // com.example.medreminder.ui.addmedication.AddMedicationViewModel 
+          return (T) new AddMedicationViewModel(singletonCImpl.medicationRepositoryProvider.get(), singletonCImpl.alarmSchedulerProvider.get(), viewModelCImpl.savedStateHandle);
+
+          case 1: // com.example.medreminder.ui.history.HistoryViewModel 
+          return (T) new HistoryViewModel(singletonCImpl.medicationRepositoryProvider.get());
+
+          case 2: // com.example.medreminder.ui.home.HomeViewModel 
+          return (T) new HomeViewModel(singletonCImpl.medicationRepositoryProvider.get(), singletonCImpl.alarmSchedulerProvider.get(), singletonCImpl.settingsRepositoryProvider.get(), ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule));
+
+          case 3: // com.example.medreminder.ui.medications.MedicationsViewModel 
+          return (T) new MedicationsViewModel(singletonCImpl.medicationRepositoryProvider.get(), singletonCImpl.alarmSchedulerProvider.get());
+
+          case 4: // com.example.medreminder.ui.settings.SettingsViewModel 
+          return (T) new SettingsViewModel(singletonCImpl.settingsRepositoryProvider.get(), singletonCImpl.ringtoneManagerWrapperProvider.get());
+
+          default: throw new AssertionError(id);
+        }
+      }
+    }
+  }
+
+  private static final class ActivityRetainedCImpl extends MedReminderApp_HiltComponents.ActivityRetainedC {
+    private final SingletonCImpl singletonCImpl;
+
+    private final ActivityRetainedCImpl activityRetainedCImpl = this;
+
+    private Provider<ActivityRetainedLifecycle> provideActivityRetainedLifecycleProvider;
+
+    private ActivityRetainedCImpl(SingletonCImpl singletonCImpl,
+        SavedStateHandleHolder savedStateHandleHolderParam) {
+      this.singletonCImpl = singletonCImpl;
+
+      initialize(savedStateHandleHolderParam);
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize(final SavedStateHandleHolder savedStateHandleHolderParam) {
+      this.provideActivityRetainedLifecycleProvider = DoubleCheck.provider(new SwitchingProvider<ActivityRetainedLifecycle>(singletonCImpl, activityRetainedCImpl, 0));
+    }
+
+    @Override
+    public ActivityComponentBuilder activityComponentBuilder() {
+      return new ActivityCBuilder(singletonCImpl, activityRetainedCImpl);
+    }
+
+    @Override
+    public ActivityRetainedLifecycle getActivityRetainedLifecycle() {
+      return provideActivityRetainedLifecycleProvider.get();
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final SingletonCImpl singletonCImpl;
+
+      private final ActivityRetainedCImpl activityRetainedCImpl;
+
+      private final int id;
+
+      SwitchingProvider(SingletonCImpl singletonCImpl, ActivityRetainedCImpl activityRetainedCImpl,
+          int id) {
+        this.singletonCImpl = singletonCImpl;
+        this.activityRetainedCImpl = activityRetainedCImpl;
+        this.id = id;
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public T get() {
+        switch (id) {
+          case 0: // dagger.hilt.android.ActivityRetainedLifecycle 
+          return (T) ActivityRetainedComponentManager_LifecycleModule_ProvideActivityRetainedLifecycleFactory.provideActivityRetainedLifecycle();
+
+          default: throw new AssertionError(id);
+        }
+      }
+    }
+  }
+
+  private static final class ServiceCImpl extends MedReminderApp_HiltComponents.ServiceC {
+    private final SingletonCImpl singletonCImpl;
+
+    private final ServiceCImpl serviceCImpl = this;
+
+    private ServiceCImpl(SingletonCImpl singletonCImpl, Service serviceParam) {
+      this.singletonCImpl = singletonCImpl;
+
+
+    }
+  }
+
+  private static final class SingletonCImpl extends MedReminderApp_HiltComponents.SingletonC {
+    private final ApplicationContextModule applicationContextModule;
+
+    private final SingletonCImpl singletonCImpl = this;
+
+    private Provider<SettingsRepository> settingsRepositoryProvider;
+
+    private Provider<AppDatabase> provideDatabaseProvider;
+
+    private Provider<MedicationRepository> medicationRepositoryProvider;
+
+    private Provider<Context> provideApplicationContextProvider;
+
+    private Provider<AlarmScheduler> alarmSchedulerProvider;
+
+    private Provider<RingtoneManagerWrapper> ringtoneManagerWrapperProvider;
+
+    private SingletonCImpl(ApplicationContextModule applicationContextModuleParam) {
+      this.applicationContextModule = applicationContextModuleParam;
+      initialize(applicationContextModuleParam);
+
+    }
+
+    private MedicationDao medicationDao() {
+      return DatabaseModule_ProvideMedicationDaoFactory.provideMedicationDao(provideDatabaseProvider.get());
+    }
+
+    private MedicationLogDao medicationLogDao() {
+      return DatabaseModule_ProvideMedicationLogDaoFactory.provideMedicationLogDao(provideDatabaseProvider.get());
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize(final ApplicationContextModule applicationContextModuleParam) {
+      this.settingsRepositoryProvider = DoubleCheck.provider(new SwitchingProvider<SettingsRepository>(singletonCImpl, 0));
+      this.provideDatabaseProvider = DoubleCheck.provider(new SwitchingProvider<AppDatabase>(singletonCImpl, 2));
+      this.medicationRepositoryProvider = DoubleCheck.provider(new SwitchingProvider<MedicationRepository>(singletonCImpl, 1));
+      this.provideApplicationContextProvider = DoubleCheck.provider(new SwitchingProvider<Context>(singletonCImpl, 4));
+      this.alarmSchedulerProvider = DoubleCheck.provider(new SwitchingProvider<AlarmScheduler>(singletonCImpl, 3));
+      this.ringtoneManagerWrapperProvider = DoubleCheck.provider(new SwitchingProvider<RingtoneManagerWrapper>(singletonCImpl, 5));
+    }
+
+    @Override
+    public void injectMedReminderApp(MedReminderApp medReminderApp) {
+      injectMedReminderApp2(medReminderApp);
+    }
+
+    @Override
+    public void injectAlarmReceiver(AlarmReceiver alarmReceiver) {
+      injectAlarmReceiver2(alarmReceiver);
+    }
+
+    @Override
+    public void injectBootReceiver(BootReceiver bootReceiver) {
+      injectBootReceiver2(bootReceiver);
+    }
+
+    @Override
+    public void injectNotificationActionReceiver(
+        NotificationActionReceiver notificationActionReceiver) {
+      injectNotificationActionReceiver2(notificationActionReceiver);
+    }
+
+    @Override
+    public Set<Boolean> getDisableFragmentGetContextFix() {
+      return Collections.<Boolean>emptySet();
+    }
+
+    @Override
+    public ActivityRetainedComponentBuilder retainedComponentBuilder() {
+      return new ActivityRetainedCBuilder(singletonCImpl);
+    }
+
+    @Override
+    public ServiceComponentBuilder serviceComponentBuilder() {
+      return new ServiceCBuilder(singletonCImpl);
+    }
+
+    private MedReminderApp injectMedReminderApp2(MedReminderApp instance) {
+      MedReminderApp_MembersInjector.injectSettingsRepository(instance, settingsRepositoryProvider.get());
+      MedReminderApp_MembersInjector.injectRepository(instance, medicationRepositoryProvider.get());
+      MedReminderApp_MembersInjector.injectAlarmScheduler(instance, alarmSchedulerProvider.get());
+      return instance;
+    }
+
+    private AlarmReceiver injectAlarmReceiver2(AlarmReceiver instance) {
+      AlarmReceiver_MembersInjector.injectRepository(instance, medicationRepositoryProvider.get());
+      AlarmReceiver_MembersInjector.injectSettingsRepository(instance, settingsRepositoryProvider.get());
+      return instance;
+    }
+
+    private BootReceiver injectBootReceiver2(BootReceiver instance) {
+      BootReceiver_MembersInjector.injectRepository(instance, medicationRepositoryProvider.get());
+      BootReceiver_MembersInjector.injectAlarmScheduler(instance, alarmSchedulerProvider.get());
+      return instance;
+    }
+
+    private NotificationActionReceiver injectNotificationActionReceiver2(
+        NotificationActionReceiver instance) {
+      NotificationActionReceiver_MembersInjector.injectRepository(instance, medicationRepositoryProvider.get());
+      NotificationActionReceiver_MembersInjector.injectSettingsRepository(instance, settingsRepositoryProvider.get());
+      return instance;
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final SingletonCImpl singletonCImpl;
+
+      private final int id;
+
+      SwitchingProvider(SingletonCImpl singletonCImpl, int id) {
+        this.singletonCImpl = singletonCImpl;
+        this.id = id;
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public T get() {
+        switch (id) {
+          case 0: // com.example.medreminder.data.preferences.SettingsRepository 
+          return (T) new SettingsRepository(ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule));
+
+          case 1: // com.example.medreminder.data.repository.MedicationRepository 
+          return (T) new MedicationRepository(singletonCImpl.medicationDao(), singletonCImpl.medicationLogDao());
+
+          case 2: // com.example.medreminder.data.database.AppDatabase 
+          return (T) DatabaseModule_ProvideDatabaseFactory.provideDatabase(ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule));
+
+          case 3: // com.example.medreminder.notification.AlarmScheduler 
+          return (T) new AlarmScheduler(singletonCImpl.provideApplicationContextProvider.get());
+
+          case 4: // android.content.Context 
+          return (T) AppModule_ProvideApplicationContextFactory.provideApplicationContext(ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule));
+
+          case 5: // com.example.medreminder.ui.settings.RingtoneManagerWrapper 
+          return (T) new RingtoneManagerWrapper(ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule));
+
+          default: throw new AssertionError(id);
+        }
+      }
+    }
+  }
+}
