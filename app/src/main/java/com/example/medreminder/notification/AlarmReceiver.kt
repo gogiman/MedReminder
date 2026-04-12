@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import com.example.medreminder.data.preferences.SettingsRepository
 import com.example.medreminder.data.repository.MedicationRepository
+import com.example.medreminder.util.DayTimesUtil
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -50,6 +51,12 @@ class AlarmReceiver : BroadcastReceiver() {
                     if (med.frequencyType == "weekly") {
                         val activeDays = med.daysOfWeek.split(",").mapNotNull { it.trim().toIntOrNull() }
                         if (!activeDays.contains(dayOfWeek)) return@filter false
+                        // Per-day time check: if this med has per-day times, verify today includes this slot
+                        if (med.dayReminderTimes.isNotEmpty()) {
+                            val entries = DayTimesUtil.parseEntries(med.dayReminderTimes)
+                            val dayTimes = DayTimesUtil.getTimesForDay(entries, dayOfWeek)
+                            if (dayTimes.isNotEmpty() && !dayTimes.contains(timeSlot)) return@filter false
+                        }
                     }
 
                     // Rolling: skip if already taken this week

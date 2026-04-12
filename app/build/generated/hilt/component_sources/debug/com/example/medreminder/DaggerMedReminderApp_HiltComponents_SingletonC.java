@@ -414,7 +414,7 @@ public final class DaggerMedReminderApp_HiltComponents_SingletonC {
 
     @IdentifierNameString
     private static final class LazyClassKeyProvider {
-      static String com_example_medreminder_ui_medications_MedicationsViewModel = "com.example.medreminder.ui.medications.MedicationsViewModel";
+      static String com_example_medreminder_ui_settings_SettingsViewModel = "com.example.medreminder.ui.settings.SettingsViewModel";
 
       static String com_example_medreminder_ui_addmedication_AddMedicationViewModel = "com.example.medreminder.ui.addmedication.AddMedicationViewModel";
 
@@ -422,10 +422,10 @@ public final class DaggerMedReminderApp_HiltComponents_SingletonC {
 
       static String com_example_medreminder_ui_history_HistoryViewModel = "com.example.medreminder.ui.history.HistoryViewModel";
 
-      static String com_example_medreminder_ui_settings_SettingsViewModel = "com.example.medreminder.ui.settings.SettingsViewModel";
+      static String com_example_medreminder_ui_medications_MedicationsViewModel = "com.example.medreminder.ui.medications.MedicationsViewModel";
 
       @KeepFieldType
-      MedicationsViewModel com_example_medreminder_ui_medications_MedicationsViewModel2;
+      SettingsViewModel com_example_medreminder_ui_settings_SettingsViewModel2;
 
       @KeepFieldType
       AddMedicationViewModel com_example_medreminder_ui_addmedication_AddMedicationViewModel2;
@@ -437,7 +437,7 @@ public final class DaggerMedReminderApp_HiltComponents_SingletonC {
       HistoryViewModel com_example_medreminder_ui_history_HistoryViewModel2;
 
       @KeepFieldType
-      SettingsViewModel com_example_medreminder_ui_settings_SettingsViewModel2;
+      MedicationsViewModel com_example_medreminder_ui_medications_MedicationsViewModel2;
     }
   }
 
@@ -492,30 +492,30 @@ public final class DaggerMedReminderApp_HiltComponents_SingletonC {
 
     @IdentifierNameString
     private static final class LazyClassKeyProvider {
+      static String com_example_medreminder_ui_medications_MedicationsViewModel = "com.example.medreminder.ui.medications.MedicationsViewModel";
+
       static String com_example_medreminder_ui_home_HomeViewModel = "com.example.medreminder.ui.home.HomeViewModel";
+
+      static String com_example_medreminder_ui_settings_SettingsViewModel = "com.example.medreminder.ui.settings.SettingsViewModel";
 
       static String com_example_medreminder_ui_addmedication_AddMedicationViewModel = "com.example.medreminder.ui.addmedication.AddMedicationViewModel";
 
       static String com_example_medreminder_ui_history_HistoryViewModel = "com.example.medreminder.ui.history.HistoryViewModel";
 
-      static String com_example_medreminder_ui_medications_MedicationsViewModel = "com.example.medreminder.ui.medications.MedicationsViewModel";
-
-      static String com_example_medreminder_ui_settings_SettingsViewModel = "com.example.medreminder.ui.settings.SettingsViewModel";
+      @KeepFieldType
+      MedicationsViewModel com_example_medreminder_ui_medications_MedicationsViewModel2;
 
       @KeepFieldType
       HomeViewModel com_example_medreminder_ui_home_HomeViewModel2;
+
+      @KeepFieldType
+      SettingsViewModel com_example_medreminder_ui_settings_SettingsViewModel2;
 
       @KeepFieldType
       AddMedicationViewModel com_example_medreminder_ui_addmedication_AddMedicationViewModel2;
 
       @KeepFieldType
       HistoryViewModel com_example_medreminder_ui_history_HistoryViewModel2;
-
-      @KeepFieldType
-      MedicationsViewModel com_example_medreminder_ui_medications_MedicationsViewModel2;
-
-      @KeepFieldType
-      SettingsViewModel com_example_medreminder_ui_settings_SettingsViewModel2;
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {

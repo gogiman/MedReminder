@@ -10,6 +10,7 @@ import com.example.medreminder.data.preferences.SettingsRepository
 import com.example.medreminder.data.repository.MedicationRepository
 import com.example.medreminder.notification.AlarmScheduler
 import com.example.medreminder.notification.NotificationHelper
+import com.example.medreminder.util.DayTimesUtil
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
@@ -105,7 +106,14 @@ class HomeViewModel @Inject constructor(
                 }
             }
 
-            val times = med.reminderTimes.split(",").map { it.trim() }
+            val times = when {
+                med.frequencyType == "weekly" && med.dayReminderTimes.isNotEmpty() -> {
+                    val entries = DayTimesUtil.parseEntries(med.dayReminderTimes)
+                    DayTimesUtil.getTimesForDay(entries, dayOfWeek)
+                        .ifEmpty { med.reminderTimes.split(",").map { it.trim() } }
+                }
+                else -> med.reminderTimes.split(",").map { it.trim() }
+            }
             for (time in times) {
                 val (hour, minute) = time.split(":").map { it.toInt() }
                 val scheduledMillis = Calendar.getInstance().apply {

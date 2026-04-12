@@ -8,11 +8,12 @@ data class Medication(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
     val dosage: String,
-    val unit: String,          // e.g. "mg", "ml", "tablet(s)"
-    val frequencyType: String, // "daily", "weekly"
-    val reminderTimes: String, // comma-separated HH:mm strings e.g. "08:00,20:00"
-    val daysOfWeek: String = "1,2,3,4,5,6,7", // comma-separated 1=Mon..7=Sun (used for weekly)
+    val unit: String,
+    val frequencyType: String,
+    val reminderTimes: String,  // union of all times (comma-separated HH:mm), used for alarm scheduling
+    val daysOfWeek: String = "1,2,3,4,5,6,7",
+    val dayReminderTimes: String = "", // JSON {"1":"09:00","2":"10:00,21:00"} — weekly per-day times
     val isActive: Boolean = true,
     val notes: String = "",
-    val color: Int = 0         // index into a palette
+    val color: Int = 0
 )

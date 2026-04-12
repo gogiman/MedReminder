@@ -19,6 +19,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.medreminder.data.database.entity.Medication
 import com.example.medreminder.ui.theme.MedColors
 
+import com.example.medreminder.util.DayTimesUtil
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MedicationsScreen(
@@ -168,21 +170,36 @@ fun MedicationListItem(
                         color = MaterialTheme.colorScheme.outline.copy(alpha = contentAlpha)
                     )
                 }
-                val frequencyLabel = if (medication.frequencyType == "weekly") {
-                    val dayNames = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-                    val days = medication.daysOfWeek.split(",")
-                        .mapNotNull { it.trim().toIntOrNull() }
-                        .map { dayNames.getOrElse(it - 1) { "?" } }
-                        .joinToString(", ")
-                    "Weekly: $days"
-                } else {
-                    medication.frequencyType.replaceFirstChar { it.uppercase() }
+                val frequencyLabel = when (medication.frequencyType) {
+                    "weekly" -> {
+                        val dayNames = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+                        val days = medication.daysOfWeek.split(",")
+                            .mapNotNull { it.trim().toIntOrNull() }
+                            .map { dayNames.getOrElse(it - 1) { "?" } }
+                            .joinToString(", ")
+                        "Weekly: $days"
+                    }
+                    else -> medication.frequencyType.replaceFirstChar { it.uppercase() }
                 }
                 Text(
                     frequencyLabel,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary.copy(alpha = contentAlpha)
                 )
+                // Per-day schedule for weekly
+                if (medication.frequencyType == "weekly" && medication.dayReminderTimes.isNotEmpty()) {
+                    val entries = DayTimesUtil.parseEntries(medication.dayReminderTimes)
+                    entries.forEach { entry ->
+                        val dayStr = entry.days.joinToString(", ") { d ->
+                            listOf("Mon","Tue","Wed","Thu","Fri","Sat","Sun").getOrElse(d - 1) { "?" }
+                        }
+                        Text(
+                            "$dayStr: ${entry.times.joinToString(", ")}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = contentAlpha)
+                        )
+                    }
+                }
             }
 
             Box {

@@ -51,7 +51,7 @@ public final class MedicationDao_Impl implements MedicationDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR REPLACE INTO `medications` (`id`,`name`,`dosage`,`unit`,`frequencyType`,`reminderTimes`,`daysOfWeek`,`isActive`,`notes`,`color`) VALUES (nullif(?, 0),?,?,?,?,?,?,?,?,?)";
+        return "INSERT OR REPLACE INTO `medications` (`id`,`name`,`dosage`,`unit`,`frequencyType`,`reminderTimes`,`daysOfWeek`,`dayReminderTimes`,`isActive`,`notes`,`color`) VALUES (nullif(?, 0),?,?,?,?,?,?,?,?,?,?)";
       }
 
       @Override
@@ -64,17 +64,18 @@ public final class MedicationDao_Impl implements MedicationDao {
         statement.bindString(5, entity.getFrequencyType());
         statement.bindString(6, entity.getReminderTimes());
         statement.bindString(7, entity.getDaysOfWeek());
+        statement.bindString(8, entity.getDayReminderTimes());
         final int _tmp = entity.isActive() ? 1 : 0;
-        statement.bindLong(8, _tmp);
-        statement.bindString(9, entity.getNotes());
-        statement.bindLong(10, entity.getColor());
+        statement.bindLong(9, _tmp);
+        statement.bindString(10, entity.getNotes());
+        statement.bindLong(11, entity.getColor());
       }
     };
     this.__updateAdapterOfMedication = new EntityDeletionOrUpdateAdapter<Medication>(__db) {
       @Override
       @NonNull
       protected String createQuery() {
-        return "UPDATE OR ABORT `medications` SET `id` = ?,`name` = ?,`dosage` = ?,`unit` = ?,`frequencyType` = ?,`reminderTimes` = ?,`daysOfWeek` = ?,`isActive` = ?,`notes` = ?,`color` = ? WHERE `id` = ?";
+        return "UPDATE OR ABORT `medications` SET `id` = ?,`name` = ?,`dosage` = ?,`unit` = ?,`frequencyType` = ?,`reminderTimes` = ?,`daysOfWeek` = ?,`dayReminderTimes` = ?,`isActive` = ?,`notes` = ?,`color` = ? WHERE `id` = ?";
       }
 
       @Override
@@ -87,11 +88,12 @@ public final class MedicationDao_Impl implements MedicationDao {
         statement.bindString(5, entity.getFrequencyType());
         statement.bindString(6, entity.getReminderTimes());
         statement.bindString(7, entity.getDaysOfWeek());
+        statement.bindString(8, entity.getDayReminderTimes());
         final int _tmp = entity.isActive() ? 1 : 0;
-        statement.bindLong(8, _tmp);
-        statement.bindString(9, entity.getNotes());
-        statement.bindLong(10, entity.getColor());
-        statement.bindLong(11, entity.getId());
+        statement.bindLong(9, _tmp);
+        statement.bindString(10, entity.getNotes());
+        statement.bindLong(11, entity.getColor());
+        statement.bindLong(12, entity.getId());
       }
     };
     this.__preparedStmtOfSoftDelete = new SharedSQLiteStatement(__db) {
@@ -252,6 +254,7 @@ public final class MedicationDao_Impl implements MedicationDao {
           final int _cursorIndexOfFrequencyType = CursorUtil.getColumnIndexOrThrow(_cursor, "frequencyType");
           final int _cursorIndexOfReminderTimes = CursorUtil.getColumnIndexOrThrow(_cursor, "reminderTimes");
           final int _cursorIndexOfDaysOfWeek = CursorUtil.getColumnIndexOrThrow(_cursor, "daysOfWeek");
+          final int _cursorIndexOfDayReminderTimes = CursorUtil.getColumnIndexOrThrow(_cursor, "dayReminderTimes");
           final int _cursorIndexOfIsActive = CursorUtil.getColumnIndexOrThrow(_cursor, "isActive");
           final int _cursorIndexOfNotes = CursorUtil.getColumnIndexOrThrow(_cursor, "notes");
           final int _cursorIndexOfColor = CursorUtil.getColumnIndexOrThrow(_cursor, "color");
@@ -272,6 +275,8 @@ public final class MedicationDao_Impl implements MedicationDao {
             _tmpReminderTimes = _cursor.getString(_cursorIndexOfReminderTimes);
             final String _tmpDaysOfWeek;
             _tmpDaysOfWeek = _cursor.getString(_cursorIndexOfDaysOfWeek);
+            final String _tmpDayReminderTimes;
+            _tmpDayReminderTimes = _cursor.getString(_cursorIndexOfDayReminderTimes);
             final boolean _tmpIsActive;
             final int _tmp;
             _tmp = _cursor.getInt(_cursorIndexOfIsActive);
@@ -280,7 +285,7 @@ public final class MedicationDao_Impl implements MedicationDao {
             _tmpNotes = _cursor.getString(_cursorIndexOfNotes);
             final int _tmpColor;
             _tmpColor = _cursor.getInt(_cursorIndexOfColor);
-            _item = new Medication(_tmpId,_tmpName,_tmpDosage,_tmpUnit,_tmpFrequencyType,_tmpReminderTimes,_tmpDaysOfWeek,_tmpIsActive,_tmpNotes,_tmpColor);
+            _item = new Medication(_tmpId,_tmpName,_tmpDosage,_tmpUnit,_tmpFrequencyType,_tmpReminderTimes,_tmpDaysOfWeek,_tmpDayReminderTimes,_tmpIsActive,_tmpNotes,_tmpColor);
             _result.add(_item);
           }
           return _result;
@@ -313,6 +318,7 @@ public final class MedicationDao_Impl implements MedicationDao {
           final int _cursorIndexOfFrequencyType = CursorUtil.getColumnIndexOrThrow(_cursor, "frequencyType");
           final int _cursorIndexOfReminderTimes = CursorUtil.getColumnIndexOrThrow(_cursor, "reminderTimes");
           final int _cursorIndexOfDaysOfWeek = CursorUtil.getColumnIndexOrThrow(_cursor, "daysOfWeek");
+          final int _cursorIndexOfDayReminderTimes = CursorUtil.getColumnIndexOrThrow(_cursor, "dayReminderTimes");
           final int _cursorIndexOfIsActive = CursorUtil.getColumnIndexOrThrow(_cursor, "isActive");
           final int _cursorIndexOfNotes = CursorUtil.getColumnIndexOrThrow(_cursor, "notes");
           final int _cursorIndexOfColor = CursorUtil.getColumnIndexOrThrow(_cursor, "color");
@@ -333,6 +339,8 @@ public final class MedicationDao_Impl implements MedicationDao {
             _tmpReminderTimes = _cursor.getString(_cursorIndexOfReminderTimes);
             final String _tmpDaysOfWeek;
             _tmpDaysOfWeek = _cursor.getString(_cursorIndexOfDaysOfWeek);
+            final String _tmpDayReminderTimes;
+            _tmpDayReminderTimes = _cursor.getString(_cursorIndexOfDayReminderTimes);
             final boolean _tmpIsActive;
             final int _tmp;
             _tmp = _cursor.getInt(_cursorIndexOfIsActive);
@@ -341,7 +349,7 @@ public final class MedicationDao_Impl implements MedicationDao {
             _tmpNotes = _cursor.getString(_cursorIndexOfNotes);
             final int _tmpColor;
             _tmpColor = _cursor.getInt(_cursorIndexOfColor);
-            _item = new Medication(_tmpId,_tmpName,_tmpDosage,_tmpUnit,_tmpFrequencyType,_tmpReminderTimes,_tmpDaysOfWeek,_tmpIsActive,_tmpNotes,_tmpColor);
+            _item = new Medication(_tmpId,_tmpName,_tmpDosage,_tmpUnit,_tmpFrequencyType,_tmpReminderTimes,_tmpDaysOfWeek,_tmpDayReminderTimes,_tmpIsActive,_tmpNotes,_tmpColor);
             _result.add(_item);
           }
           return _result;
@@ -375,6 +383,7 @@ public final class MedicationDao_Impl implements MedicationDao {
           final int _cursorIndexOfFrequencyType = CursorUtil.getColumnIndexOrThrow(_cursor, "frequencyType");
           final int _cursorIndexOfReminderTimes = CursorUtil.getColumnIndexOrThrow(_cursor, "reminderTimes");
           final int _cursorIndexOfDaysOfWeek = CursorUtil.getColumnIndexOrThrow(_cursor, "daysOfWeek");
+          final int _cursorIndexOfDayReminderTimes = CursorUtil.getColumnIndexOrThrow(_cursor, "dayReminderTimes");
           final int _cursorIndexOfIsActive = CursorUtil.getColumnIndexOrThrow(_cursor, "isActive");
           final int _cursorIndexOfNotes = CursorUtil.getColumnIndexOrThrow(_cursor, "notes");
           final int _cursorIndexOfColor = CursorUtil.getColumnIndexOrThrow(_cursor, "color");
@@ -395,6 +404,8 @@ public final class MedicationDao_Impl implements MedicationDao {
             _tmpReminderTimes = _cursor.getString(_cursorIndexOfReminderTimes);
             final String _tmpDaysOfWeek;
             _tmpDaysOfWeek = _cursor.getString(_cursorIndexOfDaysOfWeek);
+            final String _tmpDayReminderTimes;
+            _tmpDayReminderTimes = _cursor.getString(_cursorIndexOfDayReminderTimes);
             final boolean _tmpIsActive;
             final int _tmp;
             _tmp = _cursor.getInt(_cursorIndexOfIsActive);
@@ -403,7 +414,7 @@ public final class MedicationDao_Impl implements MedicationDao {
             _tmpNotes = _cursor.getString(_cursorIndexOfNotes);
             final int _tmpColor;
             _tmpColor = _cursor.getInt(_cursorIndexOfColor);
-            _item = new Medication(_tmpId,_tmpName,_tmpDosage,_tmpUnit,_tmpFrequencyType,_tmpReminderTimes,_tmpDaysOfWeek,_tmpIsActive,_tmpNotes,_tmpColor);
+            _item = new Medication(_tmpId,_tmpName,_tmpDosage,_tmpUnit,_tmpFrequencyType,_tmpReminderTimes,_tmpDaysOfWeek,_tmpDayReminderTimes,_tmpIsActive,_tmpNotes,_tmpColor);
             _result.add(_item);
           }
           return _result;
@@ -435,6 +446,7 @@ public final class MedicationDao_Impl implements MedicationDao {
           final int _cursorIndexOfFrequencyType = CursorUtil.getColumnIndexOrThrow(_cursor, "frequencyType");
           final int _cursorIndexOfReminderTimes = CursorUtil.getColumnIndexOrThrow(_cursor, "reminderTimes");
           final int _cursorIndexOfDaysOfWeek = CursorUtil.getColumnIndexOrThrow(_cursor, "daysOfWeek");
+          final int _cursorIndexOfDayReminderTimes = CursorUtil.getColumnIndexOrThrow(_cursor, "dayReminderTimes");
           final int _cursorIndexOfIsActive = CursorUtil.getColumnIndexOrThrow(_cursor, "isActive");
           final int _cursorIndexOfNotes = CursorUtil.getColumnIndexOrThrow(_cursor, "notes");
           final int _cursorIndexOfColor = CursorUtil.getColumnIndexOrThrow(_cursor, "color");
@@ -454,6 +466,8 @@ public final class MedicationDao_Impl implements MedicationDao {
             _tmpReminderTimes = _cursor.getString(_cursorIndexOfReminderTimes);
             final String _tmpDaysOfWeek;
             _tmpDaysOfWeek = _cursor.getString(_cursorIndexOfDaysOfWeek);
+            final String _tmpDayReminderTimes;
+            _tmpDayReminderTimes = _cursor.getString(_cursorIndexOfDayReminderTimes);
             final boolean _tmpIsActive;
             final int _tmp;
             _tmp = _cursor.getInt(_cursorIndexOfIsActive);
@@ -462,7 +476,7 @@ public final class MedicationDao_Impl implements MedicationDao {
             _tmpNotes = _cursor.getString(_cursorIndexOfNotes);
             final int _tmpColor;
             _tmpColor = _cursor.getInt(_cursorIndexOfColor);
-            _result = new Medication(_tmpId,_tmpName,_tmpDosage,_tmpUnit,_tmpFrequencyType,_tmpReminderTimes,_tmpDaysOfWeek,_tmpIsActive,_tmpNotes,_tmpColor);
+            _result = new Medication(_tmpId,_tmpName,_tmpDosage,_tmpUnit,_tmpFrequencyType,_tmpReminderTimes,_tmpDaysOfWeek,_tmpDayReminderTimes,_tmpIsActive,_tmpNotes,_tmpColor);
           } else {
             _result = null;
           }

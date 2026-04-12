@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -17,11 +18,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.medreminder.ui.theme.MedColors
+
+private val DAY_LABELS = listOf("M", "T", "W", "T", "F", "S", "S")
+private val DAY_NAMES_SHORT = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -115,59 +119,18 @@ fun AddMedicationScreen(
                 }
             }
 
-            // Days of week picker for weekly and rolling
-            if (uiState.frequencyType == "weekly" || uiState.frequencyType == "rolling") {
-                Text(
-                    if (uiState.frequencyType == "rolling") "Allowed Days (window)" else "Days",
-                    style = MaterialTheme.typography.labelLarge
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    listOf("M", "T", "W", "T", "F", "S", "S").forEachIndexed { i, label ->
-                        val day = i + 1
-                        val selected = uiState.daysOfWeek.contains(day)
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .aspectRatio(1f)
-                                .clip(CircleShape)
-                                .background(
-                                    if (selected) MaterialTheme.colorScheme.primary
-                                    else MaterialTheme.colorScheme.surfaceVariant
-                                )
-                                .clickable { viewModel.toggleDayOfWeek(day) },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = label,
-                                style = MaterialTheme.typography.labelMedium,
-                                color = if (selected) MaterialTheme.colorScheme.onPrimary
-                                        else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
+            when (uiState.frequencyType) {
+                "weekly" -> WeeklyScheduleSection(uiState = uiState, viewModel = viewModel)
+                "rolling" -> {
+                    Text("Allowed Days (window)", style = MaterialTheme.typography.labelLarge)
+                    DayPicker(selected = uiState.daysOfWeek, onToggle = viewModel::toggleDayOfWeek)
+                    Text("Reminder Times", style = MaterialTheme.typography.labelLarge)
+                    SharedTimesSection(uiState = uiState, viewModel = viewModel)
                 }
-            }
-
-            // Reminder times
-            Text("Reminder Times", style = MaterialTheme.typography.labelLarge)
-            uiState.reminderTimes.forEachIndexed { index, time ->
-                ReminderTimeRow(
-                    time = time,
-                    onTimeChange = { viewModel.updateReminderTime(index, it) },
-                    onRemove = { viewModel.removeReminderTime(index) },
-                    showRemove = uiState.reminderTimes.size > 1
-                )
-            }
-            OutlinedButton(
-                onClick = { viewModel.addReminderTime("12:00") },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(Icons.Default.Add, null)
-                Spacer(Modifier.width(8.dp))
-                Text("Add Time")
+                else -> {
+                    Text("Reminder Times", style = MaterialTheme.typography.labelLarge)
+                    SharedTimesSection(uiState = uiState, viewModel = viewModel)
+                }
             }
 
             // Color picker
@@ -195,8 +158,7 @@ fun AddMedicationScreen(
                 onValueChange = viewModel::onNotesChange,
                 label = { Text("Notes (optional)") },
                 modifier = Modifier.fillMaxWidth(),
-                minLines = 2,
-                maxLines = 4
+                minLines = 2, maxLines = 4
             )
 
             if (uiState.isLoading) {
@@ -209,13 +171,118 @@ fun AddMedicationScreen(
 }
 
 @Composable
+private fun DayPicker(selected: List<Int>, onToggle: (Int) -> Unit) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        DAY_LABELS.forEachIndexed { i, label ->
+            val day = i + 1
+            val isSelected = selected.contains(day)
+            Box(
+                modifier = Modifier
+                    .weight(1f).aspectRatio(1f)
+                    .clip(CircleShape)
+                    .background(
+                        if (isSelected) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.surfaceVariant
+                    )
+                    .clickable { onToggle(day) },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    label,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary
+                    else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SharedTimesSection(uiState: AddMedicationUiState, viewModel: AddMedicationViewModel) {
+    uiState.reminderTimes.forEachIndexed { index, time ->
+        ReminderTimeRow(
+            time = time,
+            onTimeChange = { viewModel.updateReminderTime(index, it) },
+            onRemove = { viewModel.removeReminderTime(index) },
+            showRemove = uiState.reminderTimes.size > 1
+        )
+    }
+    OutlinedButton(onClick = { viewModel.addReminderTime("12:00") }, modifier = Modifier.fillMaxWidth()) {
+        Icon(Icons.Default.Add, null); Spacer(Modifier.width(8.dp)); Text("Add Time")
+    }
+}
+
+@Composable
+private fun WeeklyScheduleSection(uiState: AddMedicationUiState, viewModel: AddMedicationViewModel) {
+    // Saved schedule entries
+    if (uiState.scheduleEntries.isNotEmpty()) {
+        Text("Schedule", style = MaterialTheme.typography.labelLarge)
+        uiState.scheduleEntries.forEachIndexed { idx, entry ->
+            val dayStr = entry.days.joinToString(", ") { DAY_NAMES_SHORT.getOrElse(it - 1) { "?" } }
+            val timeStr = entry.times.joinToString(", ")
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                tonalElevation = 2.dp,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(dayStr, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                        Text(timeStr, style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    IconButton(onClick = { viewModel.removeScheduleEntry(idx) }, modifier = Modifier.size(32.dp)) {
+                        Icon(Icons.Default.Delete, contentDescription = "Remove",
+                            tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
+                    }
+                }
+            }
+        }
+        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+    }
+
+    // Pending builder
+    Text("Add Schedule", style = MaterialTheme.typography.labelLarge)
+    Text("1. Select days", style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant)
+    DayPicker(selected = uiState.pendingDays, onToggle = viewModel::togglePendingDay)
+    Spacer(Modifier.height(4.dp))
+    Text("2. Set times", style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant)
+    uiState.pendingTimes.forEachIndexed { index, time ->
+        ReminderTimeRow(
+            time = time,
+            onTimeChange = { viewModel.updatePendingTime(index, it) },
+            onRemove = { viewModel.removePendingTime(index) },
+            showRemove = uiState.pendingTimes.size > 1
+        )
+    }
+    OutlinedButton(onClick = { viewModel.addPendingTime("12:00") }, modifier = Modifier.fillMaxWidth()) {
+        Icon(Icons.Default.Add, null); Spacer(Modifier.width(8.dp)); Text("Add Another Time")
+    }
+    Spacer(Modifier.height(4.dp))
+    Button(
+        onClick = viewModel::addScheduleEntry,
+        modifier = Modifier.fillMaxWidth(),
+        enabled = uiState.pendingDays.isNotEmpty() && uiState.pendingTimes.isNotEmpty()
+    ) {
+        Icon(Icons.Default.Add, null)
+        Spacer(Modifier.width(8.dp))
+        val dayStr = uiState.pendingDays.joinToString(", ") { DAY_NAMES_SHORT.getOrElse(it - 1) { "?" } }
+        Text("Add  $dayStr  →  ${uiState.pendingTimes.joinToString(", ")}")
+    }
+}
+
+@Composable
 fun ReminderTimeRow(time: String, onTimeChange: (String) -> Unit, onRemove: () -> Unit, showRemove: Boolean) {
     var showPicker by remember { mutableStateOf(false) }
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedButton(onClick = { showPicker = true }, modifier = Modifier.weight(1f)) {
-            Icon(Icons.Default.Schedule, null)
-            Spacer(Modifier.width(8.dp))
-            Text(time)
+            Icon(Icons.Default.Schedule, null); Spacer(Modifier.width(8.dp)); Text(time)
         }
         if (showRemove) {
             IconButton(onClick = onRemove) {
@@ -232,7 +299,7 @@ fun ReminderTimeRow(time: String, onTimeChange: (String) -> Unit, onRemove: () -
 @Composable
 fun TimePickerDialog(initialTime: String, onConfirm: (String) -> Unit, onDismiss: () -> Unit) {
     val parts = initialTime.split(":")
-    val timePickerState = rememberTimePickerState(
+    val state = rememberTimePickerState(
         initialHour = parts[0].toIntOrNull() ?: 8,
         initialMinute = parts[1].toIntOrNull() ?: 0,
         is24Hour = true
@@ -240,13 +307,9 @@ fun TimePickerDialog(initialTime: String, onConfirm: (String) -> Unit, onDismiss
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
-            TextButton(onClick = {
-                onConfirm(String.format("%02d:%02d", timePickerState.hour, timePickerState.minute))
-            }) { Text("OK") }
+            TextButton(onClick = { onConfirm(String.format("%02d:%02d", state.hour, state.minute)) }) { Text("OK") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
-        text = {
-            TimePicker(state = timePickerState)
-        }
+        text = { TimePicker(state = state) }
     )
 }
