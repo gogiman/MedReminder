@@ -59,10 +59,26 @@ class AlarmReceiver : BroadcastReceiver() {
                         }
                     }
 
-                    // Rolling: skip if already taken this week
+                    // Rolling: apply the same effective-day logic as HomeScreen
                     if (med.frequencyType == "rolling") {
+                        // Skip if already taken this week
                         if (todayLogs.any { it.medicationId == med.id && it.status == "taken" })
                             return@filter false
+
+                        val windowDays = med.daysOfWeek.split(",").mapNotNull { it.trim().toIntOrNull() }.sorted()
+                        // Today must be in the window
+                        if (!windowDays.contains(dayOfWeek)) return@filter false
+
+                        // Compute effective day: first window day not yet rescheduled
+                        val rescheduledDays = todayLogs
+                            .filter { it.medicationId == med.id && it.status == "rescheduled" }
+                            .mapNotNull { log ->
+                                val c = Calendar.getInstance().apply { timeInMillis = log.scheduledTime }
+                                c.get(Calendar.DAY_OF_WEEK).let { if (it == 1) 7 else it - 1 }
+                            }.toSet()
+                        val effectiveDay = windowDays.firstOrNull { it !in rescheduledDays }
+                        // Don't notify if the effective day hasn't arrived yet
+                        if (effectiveDay == null || effectiveDay > dayOfWeek) return@filter false
                     }
 
                     // All types: skip if already taken at this exact scheduled time

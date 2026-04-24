@@ -4,6 +4,7 @@ import android.app.Application
 import android.app.NotificationManager
 import com.example.medreminder.data.database.entity.Medication
 import com.example.medreminder.data.preferences.SettingsRepository
+import com.example.medreminder.util.DayTimesUtil
 import com.example.medreminder.data.repository.MedicationRepository
 import com.example.medreminder.notification.AlarmScheduler
 import com.example.medreminder.notification.NotificationHelper
@@ -56,13 +57,30 @@ class MedReminderApp : Application() {
                     if (!activeDays.contains(dayOfWeek)) return@forEach
                 }
 
-                // Rolling: skip entirely if taken any time this week
+                // Rolling: apply effective-day logic — skip if rescheduled past today
                 if (med.frequencyType == "rolling") {
                     if (weekLogs.any { it.medicationId == med.id && it.status == "taken" })
                         return@forEach
+                    val windowDays = med.daysOfWeek.split(",").mapNotNull { it.trim().toIntOrNull() }.sorted()
+                    if (!windowDays.contains(dayOfWeek)) return@forEach
+                    val rescheduledDays = weekLogs
+                        .filter { it.medicationId == med.id && it.status == "rescheduled" }
+                        .mapNotNull { log ->
+                            val c = Calendar.getInstance().apply { timeInMillis = log.scheduledTime }
+                            c.get(Calendar.DAY_OF_WEEK).let { if (it == 1) 7 else it - 1 }
+                        }.toSet()
+                    val effectiveDay = windowDays.firstOrNull { it !in rescheduledDays }
+                    if (effectiveDay == null || effectiveDay > dayOfWeek) return@forEach
                 }
 
                 med.reminderTimes.split(",").map { it.trim() }.forEach { time ->
+                    // Weekly with per-day times: skip this time slot if not valid for today
+                    if (med.frequencyType == "weekly" && med.dayReminderTimes.isNotEmpty()) {
+                        val entries = DayTimesUtil.parseEntries(med.dayReminderTimes)
+                        val dayTimes = DayTimesUtil.getTimesForDay(entries, dayOfWeek)
+                        if (dayTimes.isNotEmpty() && !dayTimes.contains(time)) return@forEach
+                    }
+
                     val parts = time.split(":")
                     val hour = parts[0].toIntOrNull() ?: return@forEach
                     val minute = parts[1].toIntOrNull() ?: return@forEach
