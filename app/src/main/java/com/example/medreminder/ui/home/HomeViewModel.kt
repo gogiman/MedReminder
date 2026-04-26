@@ -51,8 +51,20 @@ class HomeViewModel @Inject constructor(
     private val _medications = repository.getAllActiveMedications()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    private val _todayLogs = repository.getTodayLogs()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    private val _dayOffset = MutableStateFlow(0)
+    private val _minDayOffset = MutableStateFlow(-28) // default 4-week retention, refined on init
+
+    val dayOffset: StateFlow<Int> = _dayOffset.asStateFlow()
+    val canGoPrevious: StateFlow<Boolean> = combine(_dayOffset, _minDayOffset) { offset, min ->
+        offset > min
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
+    // Logs for the week containing the selected day (needed for rolling effective-day logic)
+    private val _logs = _dayOffset.flatMapLatest { offset ->
+        val target = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, offset) }
+        val (start, end) = weekBoundsForDay(target)
+        repository.getLogsForDateRange(start, end)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _snoozeRefresh = MutableStateFlow(0L)
 
@@ -65,6 +77,21 @@ class HomeViewModel @Inject constructor(
 
     init {
         settingsRepository.registerOnChangeListener(snoozeChangeListener)
+        viewModelScope.launch {
+            val oldest = repository.getOldestLogTime()
+            _minDayOffset.value = if (oldest != null) {
+                val todayStart = Calendar.getInstance().apply {
+                    set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+                }.timeInMillis
+                val oldestStart = Calendar.getInstance().apply {
+                    timeInMillis = oldest
+                    set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+                }.timeInMillis
+                ((oldestStart - todayStart) / 86400000L).toInt().coerceAtMost(0)
+            } else 0
+        }
     }
 
     override fun onCleared() {
@@ -72,17 +99,46 @@ class HomeViewModel @Inject constructor(
         settingsRepository.unregisterOnChangeListener(snoozeChangeListener)
     }
 
-    val scheduleItems: StateFlow<List<ScheduleItem>> = combine(_medications, _todayLogs, _snoozeRefresh) { meds, logs, _ ->
-        buildTodaySchedule(meds, logs)
+    val scheduleItems: StateFlow<List<ScheduleItem>> = combine(
+        _medications, _logs, _snoozeRefresh, _dayOffset
+    ) { meds, logs, _, offset ->
+        val target = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, offset) }
+        buildDaySchedule(target, meds, logs)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun goToPreviousDay() {
+        if (_dayOffset.value > _minDayOffset.value) _dayOffset.value -= 1
+    }
+
+    fun goToNextDay() {
+        _dayOffset.value += 1
+    }
+
+    fun goToToday() {
+        _dayOffset.value = 0
+    }
 
     fun refreshSnoozeTimes() {
         _snoozeRefresh.value = System.currentTimeMillis()
     }
 
-    private fun buildTodaySchedule(meds: List<Medication>, logs: List<MedicationLog>): List<ScheduleItem> {
-        val today = Calendar.getInstance()
-        val dayOfWeek = today.get(Calendar.DAY_OF_WEEK).let { if (it == 1) 7 else it - 1 }
+    private fun weekBoundsForDay(target: Calendar): Pair<Long, Long> {
+        val cal = target.clone() as Calendar
+        val dow = cal.get(Calendar.DAY_OF_WEEK)
+        val daysFromMonday = if (dow == Calendar.SUNDAY) 6 else dow - Calendar.MONDAY
+        cal.add(Calendar.DAY_OF_YEAR, -daysFromMonday)
+        cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0)
+        cal.set(Calendar.SECOND, 0); cal.set(Calendar.MILLISECOND, 0)
+        val start = cal.timeInMillis
+        return Pair(start, start + 7 * 86400000L)
+    }
+
+    private fun buildDaySchedule(target: Calendar, meds: List<Medication>, logs: List<MedicationLog>): List<ScheduleItem> {
+        val dayOfWeek = target.get(Calendar.DAY_OF_WEEK).let { if (it == 1) 7 else it - 1 }
+        val dayStart = (target.clone() as Calendar).apply {
+            set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
         val items = mutableListOf<ScheduleItem>()
 
         med@ for (med in meds) {
@@ -94,15 +150,21 @@ class HomeViewModel @Inject constructor(
                 "rolling" -> {
                     val windowDays = med.daysOfWeek.split(",").mapNotNull { it.trim().toIntOrNull() }.sorted()
                     if (!windowDays.contains(dayOfWeek)) continue@med
-                    if (logs.any { it.medicationId == med.id && it.status == "taken" }) continue@med
-                    val rescheduledDays = logs
-                        .filter { it.medicationId == med.id && it.status == "rescheduled" }
-                        .mapNotNull { log ->
-                            val c = Calendar.getInstance().apply { timeInMillis = log.scheduledTime }
-                            c.get(Calendar.DAY_OF_WEEK).let { if (it == 1) 7 else it - 1 }
-                        }.toSet()
-                    val effectiveDay = windowDays.firstOrNull { it !in rescheduledDays }
-                    if (effectiveDay == null || effectiveDay > dayOfWeek) continue@med
+                    // Skip if taken on an earlier day this week
+                    val takenBeforeThisDay = logs.any { it.medicationId == med.id && it.status == "taken" && it.scheduledTime < dayStart }
+                    if (takenBeforeThisDay) continue@med
+                    // Only apply effective-day filter when there's no log for this specific day
+                    val hasLogForThisDay = logs.any { it.medicationId == med.id && it.scheduledTime >= dayStart && it.scheduledTime < dayStart + 86400000L }
+                    if (!hasLogForThisDay) {
+                        val rescheduledDays = logs
+                            .filter { it.medicationId == med.id && it.status == "rescheduled" && it.scheduledTime < dayStart }
+                            .mapNotNull { log ->
+                                val c = Calendar.getInstance().apply { timeInMillis = log.scheduledTime }
+                                c.get(Calendar.DAY_OF_WEEK).let { if (it == 1) 7 else it - 1 }
+                            }.toSet()
+                        val effectiveDay = windowDays.firstOrNull { it !in rescheduledDays }
+                        if (effectiveDay == null || effectiveDay > dayOfWeek) continue@med
+                    }
                 }
             }
 
@@ -116,7 +178,7 @@ class HomeViewModel @Inject constructor(
             }
             for (time in times) {
                 val (hour, minute) = time.split(":").map { it.toInt() }
-                val scheduledMillis = Calendar.getInstance().apply {
+                val scheduledMillis = (target.clone() as Calendar).apply {
                     set(Calendar.HOUR_OF_DAY, hour); set(Calendar.MINUTE, minute)
                     set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
                 }.timeInMillis

@@ -62,10 +62,15 @@ class MedicationRepository @Inject constructor(
         return logDao.getLogsForDay(weekStart, weekEnd)
     }
 
-    fun getRecentLogs(daysBack: Int = 7): Flow<List<MedicationLog>> {
-        val from = System.currentTimeMillis() - daysBack * 24 * 60 * 60 * 1000L
-        return logDao.getLogsFrom(from)
+    suspend fun getOldestLogTime(): Long? = logDao.getOldestLogTime()
+
+    suspend fun purgeOldLogs() {
+        val cutoff = System.currentTimeMillis() - 28 * 24 * 60 * 60 * 1000L
+        logDao.deleteLogsBefore(cutoff)
     }
+
+    fun getLogsForDateRange(from: Long, to: Long): Flow<List<MedicationLog>> =
+        logDao.getLogsForRange(from, to)
 
     suspend fun markLog(medicationId: Long, scheduledTime: Long, status: String) {
         val existing = logDao.getByMedAndTime(medicationId, scheduledTime)

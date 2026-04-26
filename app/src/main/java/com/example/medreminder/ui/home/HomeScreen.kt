@@ -1,6 +1,8 @@
 package com.example.medreminder.ui.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -14,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -59,14 +62,26 @@ fun TimePickerDialog(
 fun HomeScreen(
     onAddMedication: () -> Unit,
     onEditMedication: (Long) -> Unit,
-    onViewHistory: () -> Unit,
     onViewMedications: () -> Unit,
     onViewSettings: () -> Unit,
+    onViewWeekly: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ){
     val scheduleItems by viewModel.scheduleItems.collectAsState()
-    val today = remember { SimpleDateFormat("EEEE, MMM d", Locale.getDefault()).format(Date()) }
+    val dayOffset by viewModel.dayOffset.collectAsState()
+    val canGoPrevious by viewModel.canGoPrevious.collectAsState()
+    val dateLabel = remember(dayOffset) {
+        val cal = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, dayOffset) }
+        val shortFmt = SimpleDateFormat("MMM d", Locale.getDefault())
+        when (dayOffset) {
+            0    -> "Today, ${shortFmt.format(cal.time)}"
+            -1   -> "Yesterday, ${shortFmt.format(cal.time)}"
+            1    -> "Tomorrow, ${shortFmt.format(cal.time)}"
+            else -> SimpleDateFormat("EEEE, MMM d", Locale.getDefault()).format(cal.time)
+        }
+    }
     var hideTaken by remember { mutableStateOf(true) }
+    var swipeAccum by remember { mutableFloatStateOf(0f) }
 
     // Refresh snooze data every time the screen resumes (e.g. after a notification action)
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -84,8 +99,8 @@ fun HomeScreen(
                     IconButton(onClick = onViewMedications) {
                         Icon(Icons.Default.MedicalServices, contentDescription = "All Medications")
                     }
-                    IconButton(onClick = onViewHistory) {
-                        Icon(Icons.Default.History, contentDescription = "History")
+                    IconButton(onClick = onViewWeekly) {
+                        Icon(Icons.Default.CalendarMonth, contentDescription = "Weekly Schedule")
                     }
                     IconButton(onClick = onViewSettings) {
                         Icon(Icons.Default.Settings, contentDescription = "Settings")
@@ -104,27 +119,65 @@ fun HomeScreen(
             }
         }
     ) { padding ->
-        Column(modifier = Modifier.padding(padding).fillMaxSize()) {
+        Column(modifier = Modifier
+            .padding(padding)
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onDragStart = { swipeAccum = 0f },
+                    onDragCancel = { swipeAccum = 0f },
+                    onDragEnd = {
+                        val threshold = 80.dp.toPx()
+                        if (swipeAccum < -threshold) viewModel.goToNextDay()
+                        else if (swipeAccum > threshold) viewModel.goToPreviousDay()
+                        swipeAccum = 0f
+                    },
+                    onHorizontalDrag = { _, delta -> swipeAccum += delta }
+                )
+            }
+        ) {
             // Date header
             Surface(color = MaterialTheme.colorScheme.primaryContainer) {
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.CalendarToday, contentDescription = null, modifier = Modifier.size(20.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(today, style = MaterialTheme.typography.titleMedium)
-                    Spacer(modifier = Modifier.weight(1f))
+                    IconButton(
+                        onClick = viewModel::goToPreviousDay,
+                        enabled = canGoPrevious,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(Icons.Default.ChevronLeft, contentDescription = "Previous day", modifier = Modifier.size(20.dp))
+                    }
+                    Icon(Icons.Default.CalendarToday, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        dateLabel,
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier
+                            .weight(1f)
+                            .then(if (dayOffset != 0) Modifier.clickable { viewModel.goToToday() } else Modifier),
+                        color = if (dayOffset != 0) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurface
+                    )
                     val taken = scheduleItems.count { it.status == "taken" }
                     val total = scheduleItems.size
                     Text("$taken/$total taken", style = MaterialTheme.typography.labelMedium)
                     Spacer(modifier = Modifier.width(4.dp))
-                    IconButton(onClick = { hideTaken = !hideTaken }, modifier = Modifier.size(32.dp)) {
-                        Icon(
-                            if (hideTaken) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                            contentDescription = if (hideTaken) "Show taken" else "Hide taken",
-                            modifier = Modifier.size(18.dp)
-                        )
+                    if (dayOffset == 0) {
+                        IconButton(onClick = { hideTaken = !hideTaken }, modifier = Modifier.size(32.dp)) {
+                            Icon(
+                                if (hideTaken) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                contentDescription = if (hideTaken) "Show taken" else "Hide taken",
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                    IconButton(
+                        onClick = viewModel::goToNextDay,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(Icons.Default.ChevronRight, contentDescription = "Next day", modifier = Modifier.size(20.dp))
                     }
                 }
             }
@@ -135,15 +188,15 @@ fun HomeScreen(
                         Icon(Icons.Default.LocalPharmacy, contentDescription = null,
                             modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.outline)
                         Spacer(Modifier.height(16.dp))
-                        Text("No medications scheduled for today", style = MaterialTheme.typography.bodyLarge,
+                        Text("No medications scheduled for this day", style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.outline)
                         Spacer(Modifier.height(8.dp))
-                        TextButton(onClick = onAddMedication) { Text("Add your first medication") }
+                        if (dayOffset == 0) TextButton(onClick = onAddMedication) { Text("Add your first medication") }
                     }
                 }
             } else {
-                val grouped = remember(scheduleItems, hideTaken) {
-                    val visible = if (hideTaken)
+                val grouped = remember(scheduleItems, hideTaken, dayOffset) {
+                    val visible = if (hideTaken && dayOffset == 0)
                         scheduleItems.filter { it.status == "pending" }
                     else
                         scheduleItems
@@ -155,7 +208,7 @@ fun HomeScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ){
                     grouped.forEach { (timeLabel, items) ->
-                        val pendingItems = items.filter { it.status == "pending" }
+                        val pendingItems = if (dayOffset == 0) items.filter { it.status == "pending" } else emptyList()
                         item(key = "header_$timeLabel") {
                             TimeSlotHeader(
                                 timeLabel = timeLabel,
@@ -165,15 +218,19 @@ fun HomeScreen(
                             )
                         }
                         items(items, key = { "${it.medication.id}_${it.scheduledTime}" }) { item ->
-                            MedicationCard(
-                                item = item,
-                                onTake = { viewModel.takeMedication(item) },
-                                onSkip = { viewModel.skipMedication(item) },
-                                onReschedule = { viewModel.rescheduleToNextDay(item) },
-                                onSnoozeUntil = { h, m -> viewModel.snoozeUntil(item, h, m) },
-                                onEdit = { onEditMedication(item.medication.id) },
-                                onDisable = { viewModel.disableMedication(item.medication) }
-                            )
+                            if (dayOffset == 0) {
+                                MedicationCard(
+                                    item = item,
+                                    onTake = { viewModel.takeMedication(item) },
+                                    onSkip = { viewModel.skipMedication(item) },
+                                    onReschedule = { viewModel.rescheduleToNextDay(item) },
+                                    onSnoozeUntil = { h, m -> viewModel.snoozeUntil(item, h, m) },
+                                    onEdit = { onEditMedication(item.medication.id) },
+                                    onDisable = { viewModel.disableMedication(item.medication) }
+                                )
+                            } else {
+                                ReadOnlyMedicationCard(item)
+                            }
                         }
                     }
                 }
@@ -248,6 +305,81 @@ fun TimeSlotHeader(
             onDismiss = { showTimePicker = false },
             onConfirm = { h, m -> showTimePicker = false; onRescheduleAll(h, m) }
         )
+    }
+}
+
+@Composable
+fun ReadOnlyMedicationCard(item: ScheduleItem) {
+    val medColor = MedColors.getOrElse(item.medication.color) { MedColors[0] }
+    val displayStatus = when {
+        item.log?.status != null -> item.log.status
+        item.scheduledTime < System.currentTimeMillis() -> "missed"
+        else -> "pending"
+    }
+    val statusColor = when (displayStatus) {
+        "taken"       -> Color(0xFF4CAF50)
+        "skipped"     -> Color(0xFFFF9800)
+        "missed"      -> Color(0xFFF44336)
+        "rescheduled" -> Color(0xFF2196F3)
+        else          -> MaterialTheme.colorScheme.outline
+    }
+    val statusIcon = when (displayStatus) {
+        "taken"       -> Icons.Default.CheckCircle
+        "skipped"     -> Icons.Default.Cancel
+        "missed"      -> Icons.Default.Warning
+        "rescheduled" -> Icons.Default.Redo
+        else          -> Icons.Default.AccessTime
+    }
+    val scheduledTimeStr = remember(item.scheduledTime) {
+        val cal = Calendar.getInstance().apply { timeInMillis = item.scheduledTime }
+        String.format("%02d:%02d", cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier.size(38.dp).clip(CircleShape).background(medColor.copy(alpha = 0.15f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Default.Medication, contentDescription = null, tint = medColor, modifier = Modifier.size(22.dp))
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(item.medication.name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+                Text(
+                    "${item.medication.dosage} ${item.medication.unit}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text(scheduledTimeStr, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Medium)
+                Spacer(Modifier.height(2.dp))
+                val takenTime = item.log?.takenTime
+                if (displayStatus == "taken" && takenTime != null) {
+                    val cal = Calendar.getInstance().apply { timeInMillis = takenTime }
+                    val takenStr = String.format("%02d:%02d", cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.CheckCircle, null, tint = statusColor, modifier = Modifier.size(12.dp))
+                        Spacer(Modifier.width(2.dp))
+                        Text("taken $takenStr", style = MaterialTheme.typography.labelSmall, color = statusColor)
+                    }
+                } else {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(statusIcon, null, tint = statusColor, modifier = Modifier.size(12.dp))
+                        Spacer(Modifier.width(2.dp))
+                        Text(displayStatus, style = MaterialTheme.typography.labelSmall, color = statusColor)
+                    }
+                }
+            }
+        }
     }
 }
 

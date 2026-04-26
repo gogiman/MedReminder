@@ -23,6 +23,7 @@ class MedReminderApp : Application() {
     override fun onCreate() {
         super.onCreate()
         ensureNotificationChannelHasSound()
+        purgeOldLogs()
         rescheduleAndNotifyMissed()
     }
 
@@ -35,6 +36,10 @@ class MedReminderApp : Application() {
             settingsRepository.bumpChannelVersion()
         }
         NotificationHelper.createNotificationChannel(this, settingsRepository)
+    }
+
+    private fun purgeOldLogs() {
+        MainScope().launch { repository.purgeOldLogs() }
     }
 
     private fun rescheduleAndNotifyMissed() {

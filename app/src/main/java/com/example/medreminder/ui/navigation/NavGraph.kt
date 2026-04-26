@@ -7,19 +7,19 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.medreminder.ui.addmedication.AddMedicationScreen
-import com.example.medreminder.ui.history.HistoryScreen
 import com.example.medreminder.ui.home.HomeScreen
 import com.example.medreminder.ui.medications.MedicationsScreen
 import com.example.medreminder.ui.settings.SettingsScreen
+import com.example.medreminder.ui.weekly.WeeklyScreen
 
 sealed class Screen(val route: String) {
     object Home : Screen("home")
     object AddMedication : Screen("add_medication?medicationId={medicationId}") {
         fun createRoute(medicationId: Long = -1) = "add_medication?medicationId=$medicationId"
     }
-    object History : Screen("history")
     object Medications : Screen("medications")
     object Settings : Screen("settings")
+    object Weekly : Screen("weekly")
 }
 
 @Composable
@@ -29,9 +29,9 @@ fun NavGraph(navController: NavHostController) {
             HomeScreen(
                 onAddMedication = { navController.navigate(Screen.AddMedication.createRoute()) },
                 onEditMedication = { id -> navController.navigate(Screen.AddMedication.createRoute(id)) },
-                onViewHistory = { navController.navigate(Screen.History.route) },
                 onViewMedications = { navController.navigate(Screen.Medications.route) },
-                onViewSettings = { navController.navigate(Screen.Settings.route) }
+                onViewSettings = { navController.navigate(Screen.Settings.route) },
+                onViewWeekly = { navController.navigate(Screen.Weekly.route) }
             )
         }
         composable(
@@ -42,9 +42,6 @@ fun NavGraph(navController: NavHostController) {
         ) {
             AddMedicationScreen(onNavigateBack = { navController.popBackStack() })
         }
-        composable(Screen.History.route) {
-            HistoryScreen(onNavigateBack = { navController.popBackStack() })
-        }
         composable(Screen.Medications.route) {
             MedicationsScreen(
                 onNavigateBack = { navController.popBackStack() },
@@ -54,6 +51,9 @@ fun NavGraph(navController: NavHostController) {
         }
         composable(Screen.Settings.route) {
             SettingsScreen(onNavigateBack = { navController.popBackStack() })
+        }
+        composable(Screen.Weekly.route) {
+            WeeklyScreen(onNavigateBack = { navController.popBackStack() })
         }
     }
 }
