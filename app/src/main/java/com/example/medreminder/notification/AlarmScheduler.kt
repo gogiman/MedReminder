@@ -26,7 +26,10 @@ class AlarmScheduler @Inject constructor(private val context: Context) {
         if (!medication.isActive) return
         val times = medication.reminderTimes.split(",").map { it.trim() }
         times.forEach { time ->
-            val (hour, minute) = time.split(":").map { it.toInt() }
+            val parts = time.split(":")
+            if (parts.size != 2) return@forEach
+            val hour = parts[0].toIntOrNull() ?: return@forEach
+            val minute = parts[1].toIntOrNull() ?: return@forEach
             val cal = Calendar.getInstance().apply {
                 set(Calendar.HOUR_OF_DAY, hour)
                 set(Calendar.MINUTE, minute)
@@ -49,14 +52,25 @@ class AlarmScheduler @Inject constructor(private val context: Context) {
     fun cancelAlarms(medication: Medication) {
         val times = medication.reminderTimes.split(",").map { it.trim() }
         times.forEach { time ->
-            val requestCode = time.filter { it.isDigit() }.toIntOrNull() ?: time.hashCode()
-            val intent = Intent(context, AlarmReceiver::class.java)
-            val pi = PendingIntent.getBroadcast(
-                context, requestCode, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            alarmManager.cancel(pi)
+            val notificationId = time.filter { it.isDigit() }.toIntOrNull() ?: time.hashCode()
+            // Cancel primary daily alarm
+            cancelPendingIntent(notificationId)
+            // Cancel repeat alarm (id + 50000)
+            cancelPendingIntent(notificationId + AlarmReceiver.REPEAT_REQUEST_OFFSET)
+            // Cancel notification snooze alarm (id + 60000)
+            cancelPendingIntent(notificationId + NOTIFICATION_SNOOZE_REQUEST_OFFSET)
+            // Cancel manual snooze alarm (id + 70000)
+            cancelPendingIntent(notificationId + MANUAL_SNOOZE_REQUEST_OFFSET)
         }
+    }
+
+    private fun cancelPendingIntent(requestCode: Int) {
+        val intent = Intent(context, AlarmReceiver::class.java)
+        val pi = PendingIntent.getBroadcast(
+            context, requestCode, intent,
+            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+        )
+        if (pi != null) alarmManager.cancel(pi)
     }
 
     fun scheduleManualSnooze(timeSlot: String, triggerAtMillis: Long) {
@@ -93,6 +107,7 @@ class AlarmScheduler @Inject constructor(private val context: Context) {
     }
 
     companion object {
+        const val NOTIFICATION_SNOOZE_REQUEST_OFFSET = 60000
         const val MANUAL_SNOOZE_REQUEST_OFFSET = 70000
     }
 }

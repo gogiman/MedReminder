@@ -69,6 +69,12 @@ class NotificationActionReceiver : BroadcastReceiver() {
                             alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, snoozePi)
                         }
                     }
+                    ACTION_RESCHEDULE_NEXT_DAY -> {
+                        medIds.forEach { medId ->
+                            repository.markLog(medId, scheduledTime, "rescheduled")
+                            settingsRepository.clearSnooze(medId, scheduledTime)
+                        }
+                    }
                 }
             } finally {
                 pendingResult.finish()
@@ -91,6 +97,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
     companion object {
         const val ACTION_CONFIRM_ALL = "com.example.medreminder.ACTION_CONFIRM_ALL"
         const val ACTION_SNOOZE_30 = "com.example.medreminder.ACTION_SNOOZE_30"
+        const val ACTION_RESCHEDULE_NEXT_DAY = "com.example.medreminder.ACTION_RESCHEDULE_NEXT_DAY"
         const val EXTRA_TIME_SLOT = "time_slot"
         const val EXTRA_NOTIFICATION_ID = "notification_id"
         const val EXTRA_MED_IDS = "med_ids"

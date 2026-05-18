@@ -12,6 +12,7 @@ import com.example.medreminder.MainActivity
 import com.example.medreminder.R
 import com.example.medreminder.data.database.entity.Medication
 import com.example.medreminder.data.preferences.SettingsRepository
+import java.util.Calendar
 
 object NotificationHelper {
     const val CHANNEL_NAME = "Medication Reminders"
@@ -81,7 +82,15 @@ object NotificationHelper {
         val title = if (medCount == 1) "Time to take ${medications[0].name}" else "Time to take $medCount medications"
         val bigText = medications.joinToString("\n") { "• ${it.name}  ${it.dosage} ${it.unit}" }
 
-        val notification = NotificationCompat.Builder(context, channelId)
+        // Find rolling medications that can still be moved to a later day in their window
+        val todayDow = Calendar.getInstance().get(Calendar.DAY_OF_WEEK).let { if (it == 1) 7 else it - 1 }
+        val reschedulableMeds = medications.filter { med ->
+            if (med.frequencyType != "rolling") return@filter false
+            val windowDays = med.daysOfWeek.split(",").mapNotNull { it.trim().toIntOrNull() }.sorted()
+            windowDays.isNotEmpty() && windowDays.last() != todayDow
+        }
+
+        val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_medication)
             .setContentTitle(title)
             .setContentText(if (medCount == 1) "${medications[0].dosage} ${medications[0].unit}" else medications.joinToString(", ") { it.name })
@@ -94,7 +103,24 @@ object NotificationHelper {
             .setVibrate(longArrayOf(0, 400, 200, 400))
             .addAction(R.drawable.ic_medication, "✓ Confirm All", confirmPi)
             .addAction(R.drawable.ic_medication, "⏰ 30 min later", snoozePi)
-            .build()
+
+        if (reschedulableMeds.isNotEmpty()) {
+            // Pass ALL med IDs — non-rolling ones will be skipped server-side,
+            // but having them here prevents them being silently abandoned.
+            val nextDayIntent = Intent(context, NotificationActionReceiver::class.java).apply {
+                action = NotificationActionReceiver.ACTION_RESCHEDULE_NEXT_DAY
+                putExtra(NotificationActionReceiver.EXTRA_TIME_SLOT, timeSlot)
+                putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_ID, notificationId)
+                putExtra(NotificationActionReceiver.EXTRA_MED_IDS, reschedulableMeds.map { it.id }.toLongArray())
+            }
+            val nextDayPi = PendingIntent.getBroadcast(
+                context, notificationId * 10 + 3, nextDayIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            builder.addAction(R.drawable.ic_medication, "➡ Next Day (rolling)", nextDayPi)
+        }
+
+        val notification = builder.build()
 
         context.getSystemService(NotificationManager::class.java)
             .notify(notificationId, notification)

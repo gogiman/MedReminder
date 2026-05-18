@@ -177,7 +177,10 @@ class HomeViewModel @Inject constructor(
                 else -> med.reminderTimes.split(",").map { it.trim() }
             }
             for (time in times) {
-                val (hour, minute) = time.split(":").map { it.toInt() }
+                val parts = time.split(":")
+                if (parts.size != 2) continue
+                val hour = parts[0].toIntOrNull() ?: continue
+                val minute = parts[1].toIntOrNull() ?: continue
                 val scheduledMillis = (target.clone() as Calendar).apply {
                     set(Calendar.HOUR_OF_DAY, hour); set(Calendar.MINUTE, minute)
                     set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)

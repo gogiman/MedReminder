@@ -44,6 +44,7 @@
             <intent-filter>
                 <action android:name="com.example.medreminder.ACTION_CONFIRM_ALL" />
                 <action android:name="com.example.medreminder.ACTION_SNOOZE_30" />
+                <action android:name="com.example.medreminder.ACTION_RESCHEDULE_NEXT_DAY" />
             </intent-filter>
         </receiver>
 
