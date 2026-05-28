@@ -175,6 +175,17 @@ class AddMedicationViewModel @Inject constructor(
                 notes = state.notes.trim(),
                 color = state.colorIndex
             )
+            // Cancel old alarms before saving (times/days may have changed)
+            if (medicationId > 0) {
+                val oldMed = repository.getMedicationById(medicationId)
+                if (oldMed != null) {
+                    alarmScheduler.cancelAlarms(oldMed)
+                    // Clear all logs when frequency type changes so HomeScreen shows a fresh schedule
+                    if (oldMed.frequencyType != state.frequencyType) {
+                        repository.deleteLogsForMedication(medicationId)
+                    }
+                }
+            }
             val savedId = repository.saveMedication(medication)
             alarmScheduler.scheduleAlarms(medication.copy(id = if (medicationId > 0) medicationId else savedId))
             _uiState.update { it.copy(isLoading = false, isSaved = true) }

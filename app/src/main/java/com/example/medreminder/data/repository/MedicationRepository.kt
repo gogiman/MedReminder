@@ -64,6 +64,8 @@ class MedicationRepository @Inject constructor(
 
     suspend fun getOldestLogTime(): Long? = logDao.getOldestLogTime()
 
+    suspend fun deleteLogsForMedication(medId: Long) = logDao.deleteByMedication(medId)
+
     suspend fun purgeOldLogs() {
         val cutoff = System.currentTimeMillis() - 28 * 24 * 60 * 60 * 1000L
         logDao.deleteLogsBefore(cutoff)
