@@ -9,6 +9,7 @@ import com.example.medreminder.util.DayTimesUtil
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import java.util.Calendar
 import javax.inject.Inject
 
@@ -29,6 +30,7 @@ data class WeekDayItem(
     }
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class WeeklyViewModel @Inject constructor(
     private val repository: MedicationRepository
