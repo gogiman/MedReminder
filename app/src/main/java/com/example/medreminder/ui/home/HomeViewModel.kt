@@ -16,7 +16,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Locale
 import javax.inject.Inject
 
 data class ScheduleItem(
@@ -303,5 +305,47 @@ class HomeViewModel @Inject constructor(
             alarmScheduler.cancelAlarms(medication)
             repository.disableMedication(medication.id)
         }
+    }
+
+    fun buildShareText(dayOffset: Int): String {
+        val items = scheduleItems.value
+        val cal = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, dayOffset) }
+        val dateFmt = SimpleDateFormat("EEEE, MMMM d, yyyy", Locale.getDefault())
+        val dateStr = when (dayOffset) {
+            0    -> "Today — ${dateFmt.format(cal.time)}"
+            -1   -> "Yesterday — ${dateFmt.format(cal.time)}"
+            1    -> "Tomorrow — ${dateFmt.format(cal.time)}"
+            else -> dateFmt.format(cal.time)
+        }
+
+        if (items.isEmpty()) return "MedReminder Schedule\n$dateStr\n\nNo medications scheduled."
+
+        val sb = StringBuilder()
+        sb.appendLine("MedReminder Schedule")
+        sb.appendLine(dateStr)
+        sb.appendLine()
+
+        val grouped = items.groupBy { it.timeLabel }.entries.sortedBy { it.key }
+        grouped.forEach { (time, meds) ->
+            sb.appendLine("⏰ $time")
+            meds.forEach { item ->
+                val statusIcon = when (item.status) {
+                    "taken"       -> "✅"
+                    "skipped"     -> "⏭"
+                    "missed"      -> "❌"
+                    "rescheduled" -> "➡"
+                    else          -> "🔔"
+                }
+                sb.append("  $statusIcon ${item.medication.name}")
+                sb.append("  —  ${item.medication.dosage} ${item.medication.unit}")
+                if (item.medication.notes.isNotBlank()) sb.append("  (${item.medication.notes})")
+                sb.appendLine()
+            }
+            sb.appendLine()
+        }
+
+        val taken = items.count { it.status == "taken" }
+        sb.append("Summary: $taken / ${items.size} taken")
+        return sb.toString()
     }
 }

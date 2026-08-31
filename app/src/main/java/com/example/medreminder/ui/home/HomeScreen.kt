@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -83,6 +84,17 @@ fun HomeScreen(
     }
     var hideTaken by remember { mutableStateOf(true) }
     var swipeAccum by remember { mutableFloatStateOf(0f) }
+    val context = LocalContext.current
+
+    fun shareSchedule() {
+        val text = viewModel.buildShareText(dayOffset)
+        val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(android.content.Intent.EXTRA_SUBJECT, "Medication Schedule — $dateLabel")
+            putExtra(android.content.Intent.EXTRA_TEXT, text)
+        }
+        context.startActivity(android.content.Intent.createChooser(intent, "Share schedule via"))
+    }
 
     // Refresh snooze data every time the screen resumes (e.g. after a notification action)
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -97,6 +109,9 @@ fun HomeScreen(
             TopAppBar(
                 title = { Text("MedReminder") },
                 actions = {
+                    IconButton(onClick = { shareSchedule() }) {
+                        Icon(Icons.Default.Share, contentDescription = "Share schedule")
+                    }
                     IconButton(onClick = onViewMedications) {
                         Icon(Icons.Default.MedicalServices, contentDescription = "All Medications")
                     }
